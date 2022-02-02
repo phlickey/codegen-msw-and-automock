@@ -1,5 +1,5 @@
 overwrite: true
-schema: "./schema.gql"
+schema: "./src/schema.gql"
 documents: "./src/my-queries.ts"
 generates:
   src/generated/defs.ts:

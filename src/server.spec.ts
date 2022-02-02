@@ -2,8 +2,12 @@ import fetch from "isomorphic-fetch";
 import { setupServer } from "msw/node";
 import {
   ApprovalStatus,
+  Approver,
+  Invoice,
+  InvoiceApprovalsContainerApproversQuery,
   mockInvoiceApprovalsContainerApproversQuery,
 } from "./generated/defs";
+import { createMock } from "ts-auto-mock";
 import { INVOICE_APPROVALS_QUERY } from "./my-queries";
 
 const serverSpy = jest.fn((invoiceId: string) => {});
@@ -13,22 +17,17 @@ const server = setupServer(
     const { invoiceId } = req.variables;
     serverSpy(invoiceId);
     return res(
-      ctx.data({
-        invoice: {
-          __typename: "Invoice",
-          id: invoiceId,
-          requiresLedgerSync: false,
-          approvers: [
-            {
-              __typename: "Approver",
-              firstName: "",
-              lastName: "",
-              userId: "",
-              status: ApprovalStatus.Approved,
-            },
-          ],
-        },
-      })
+      ctx.data(
+        createMock<InvoiceApprovalsContainerApproversQuery>({
+          invoice: createMock<Invoice>({
+            id: invoiceId,
+            approvers: [
+              createMock<Approver>({ status: ApprovalStatus.Approved }),
+              createMock<Approver>({ status: ApprovalStatus.Denied }),
+            ],
+          }),
+        })
+      )
     );
   })
 );
@@ -60,6 +59,7 @@ describe("msw test", () => {
       json = await res.json();
     });
     it("returns the invoice id", () => {
+      console.log(json.data.invoice);
       expect(json.data.invoice.id).toBe(invoiceId);
     });
     it("triggers the server handler", () => {
