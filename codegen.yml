@@ -1,0 +1,9 @@
+overwrite: true
+schema: "./schema.gql"
+documents: "./src/my-queries.ts"
+generates:
+  src/generated/defs.ts:
+    plugins:
+      - "typescript"
+      - "typescript-operations"
+      - "typescript-msw"

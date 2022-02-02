@@ -1,0 +1,35 @@
+{
+  "name": "msw-codegen",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "gen": "graphql-codegen --config codegen.yml"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@graphql-codegen/add": "^3.1.1",
+    "@graphql-codegen/cli": "^2.4.0",
+    "@types/isomorphic-fetch": "0.0.35",
+    "graphql": "^16.3.0",
+    "isomorphic-fetch": "^3.0.0",
+    "jest": "^27.4.7",
+    "msw": "^0.36.8",
+    "typescript": "^4.5.5"
+  },
+  "devDependencies": {
+    "@babel/preset-env": "^7.16.11",
+    "@babel/preset-typescript": "^7.16.7",
+    "@graphql-codegen/cli": "2.4.0",
+    "@graphql-codegen/introspection": "2.1.1",
+    "@graphql-codegen/typescript": "2.4.2",
+    "@graphql-codegen/typescript-msw": "^1.0.1",
+    "@graphql-codegen/typescript-operations": "2.2.3",
+    "@graphql-codegen/typescript-react-apollo": "3.2.4",
+    "@types/jest": "^27.4.0",
+    "ts-jest": "^27.1.3"
+  }
+}

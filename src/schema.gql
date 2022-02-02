@@ -1,0 +1,356 @@
+scalar Date
+scalar DateTime
+scalar Time
+enum PlatformKey {
+  quickbooksonline
+  xero
+  sandbox
+  netsuite_internal
+}
+
+enum AmortizationScheduleStatus {
+  SCHEDULE_DRAFT
+  SCHEDULE_IN_PROGRESS
+  SCHEDULE_COMPLETED
+  SCHEDULE_CANCELLED
+}
+
+enum JournalEntryStatus {
+  JOURNAL_ENTRY_SCHEDULED
+  JOURNAL_ENTRY_COMPLETED
+}
+
+type JournalEntry {
+  # id is null when resolving draft journal entries
+  id: ID
+  amount: Amount!
+  creditAccountId: ID!
+  creditAccount: GLAccount!
+  debitAccountId: ID!
+  debitAccount: GLAccount!
+  generalLedgerId: ID!
+  generalLedger: GeneralLedger!
+  date: Date!
+  status: JournalEntryStatus!
+}
+
+type AmortizationSchedule {
+  id: ID!
+  invoiceId: ID!
+  invoice: Invoice!
+  startDate: Date!
+  endDate: Date!
+  generalLedgerId: ID!
+  generalLedger: GeneralLedger!
+  defaultDebitAccountId: ID!
+  defaultDebitAccount: GLAccount!
+  creditAccountId: ID!
+  creditAccount: GLAccount!
+  status: AmortizationScheduleStatus!
+  createdAt: DateTime!
+  lastUpdatedAt: DateTime!
+  cancelledAt: DateTime
+  deletedAt: DateTime
+  journalEntries: [JournalEntry!]!
+}
+
+type Platform {
+  # a human readable name of the General ledger platform provider (eg. QuickBooks Online)
+  displayName: String!
+  # the id of the platform provider in codat (eg. quickbooksonline)
+  key: PlatformKey!
+  # the logo of the gl platform
+  logoUrl: String!
+}
+
+type GLAccount {
+  id: ID!
+  displayName: String!
+}
+
+type GLClass {
+  id: ID!
+  displayName: String!
+}
+
+type GLLocation {
+  id: ID!
+  displayName: String!
+}
+
+type GLSupplier {
+  id: ID!
+  displayName: String!
+}
+
+type TrackingCategoryReference {
+  trackingCategoryId: String!
+  name: String
+}
+
+type GeneralLedger {
+  id: ID!
+  # an internal, human readable nickname to identify the general ledger link
+  displayName: String!
+  # the provider of the linked gl, eg. quickbooksonline
+  platformKey: PlatformKey!
+  # the human readable name of provider of the linked gl, eg. QuickBooks Online
+  platformName: String!
+  # a url on the GL Provider Platform allowing the user to authenticate, if necessary
+  authRedirectUrl: String
+  accounts: [GLAccount!]!
+  classes: [GLClass!]!
+  locations: [GLLocation!]!
+  suppliers: [GLSupplier!]!
+  ledgerStatus: String
+  lastDataSync: Date
+  # A date in the past, up to which the accounts for this ledger are finalized. Bills with dates before this date should be considered locked and un-editable.
+  ledgerLockDate: DateTime
+  topLevelClassId: String
+  topLevelLocationId: String
+  topLevelTrackingCategoryRefs: [TrackingCategoryReference!]
+}
+enum Currency {
+  USD
+  EUR
+}
+
+type Amount {
+  amountUSD: Float!
+  amountOriginal: Float!
+  currency: Currency!
+}
+
+type AccountRef {
+  accountId: String!
+  name: String
+}
+
+type TaxRateReference {
+  taxRateId: String!
+  name: String
+}
+
+type BillLineItem {
+  unitAmount: Float!
+  totalAmount: Float!
+  accountRef: AccountRef
+  # Free text that a user can edit themselves to provide more context.
+  description: String!
+  quantity: Float!
+  taxRateRef: TaxRateReference
+  glClassId: ID
+  glClass: GLClass
+  glLocationId: ID
+  glLocation: GLLocation
+  glAccountId: ID
+  glAccount: GLAccount
+}
+
+type Bill {
+  id: ID!
+  totalAmount: Amount!
+  currency: String
+  # The id of the ledger to which the bill will be written to on sync
+  generalLedgerId: ID
+  # The ledger to which the bill will be written to on sync
+  generalLedger: GeneralLedger
+  # the id of the supplier associated with this bill
+  glSupplierId: ID
+  # the supplier associated with this bill
+  glSupplier: GLSupplier
+  # the effective date of the bill
+  billDate: Date!
+  # when the bill was last updated in glean
+  updatedInternallyAt: DateTime!
+  # when the bill was last persisted out to an external ledger
+  syncedToLedgerAt: DateTime
+  # Free text that a user can edit themselves to provide more context.
+  referenceNumber: String
+  # Subdivisions of a bill
+  billLineItems: [BillLineItem!]!
+  # a optional schedule for amortizing a bill over several journal entries
+  amortizationSchedule: AmortizationSchedule
+}
+
+enum InvoiceBillingFrequency {
+  ANNUAL
+  QUARTERLY
+  MONTHLY
+  OTHER
+}
+
+enum InvoiceProcessingStatusEnum {
+  HEADER_COMPLETED
+  LINE_ITEMS_IN_PROGRESS
+  LINE_ITEMS_COMPLETED
+}
+
+enum ApprovalStatus {
+  UNASSIGNED
+  APPROVED
+  DENIED
+  PENDING
+}
+
+enum PaymentStatus {
+  MARKED_AS_PAID
+  NOT_PAID
+  SCHEDULED
+  IN_FLIGHT
+  PAID
+  FAILED
+  PENDING
+  READY_TO_PAY
+}
+
+enum DenyReason {
+  NOT_A_BILL
+  DUPLICATE_BILL
+  INVALID_BILL
+  INCORRECT_BILL_DETAILS
+  DISSATISFIED_WITH_SERVICE
+  OTHER
+}
+
+type Approver {
+  userId: ID!
+  firstName: String!
+  lastName: String!
+  status: ApprovalStatus!
+}
+
+type TaggableUser {
+  email: String!
+  firstName: String!
+  id: ID!
+  initials: String!
+  isEligible: Boolean!
+  lastName: String!
+  name: String!
+}
+
+type Invoice {
+  # The id for the invoice.
+  id: ID!
+  # How often the invoice is delivered.
+  billingFrequency: InvoiceBillingFrequency
+  # The date payment for this invoice is due.
+  dueDate: Date
+  # The url for the original PDF or invoice asset.
+  fileURL: String!
+  # Gleans associated with this invoice
+
+  # The date the invoice was generated.
+  invoiceDate: Date
+  # The line items that are part of the invoice.
+
+  # Line items processing status
+
+  # The invoice number / vendor identifier for the invoice.
+  number: String!
+  # The billing period start date.
+  periodEndDate: Date
+  # The billing period end date.
+  periodStartDate: Date
+  # The current approval status of an invoice.
+  # A list of approvers.
+  approvers: [Approver!]!
+  # The total amount listed on the invoice.
+  totalAmount: Amount!
+  # the amount due to be paid on the invoice.
+  amountDue: Amount!
+  # Duplicate related flags
+  isDuplicate: Boolean!
+  primaryDuplicateId: ID
+  primaryDuplicateInvoiceNumber: String
+  # This field represents the invoice upload date to Glean.
+  # It is used as a helpful info for detecting duplicate ones.
+  sentAt: Date
+  # A representation of the invoice in a company's general ledger system, for accounting purposes.
+  bill(
+    # due to the async behavior of the ledger service
+    # bills can occasionally be in an unreachable state
+    # when waitForBill is passed as true the resolver will
+    # retry hub more aggressively when fetching bills
+    waitForBill: Boolean!
+  ): Bill
+  # List of all users, and whether or not they can be tagged in a comment on an invoice
+
+  # Some of the areas of the UI (for example Approvers section) are blocked,
+  # if GL data is not provided (which is pretty common in case of new invoices).
+  # This flag is simply a switch on / off for that blockade, since some customers choose not to sync with GL at all.
+  requiresLedgerSync: Boolean
+  # true if an invoice's bill has not been synced to the general ledger yet.
+  hasUnsyncedBill: Boolean!
+  denialReason: String
+  denialReasonNotes: String
+  # Number of comments associated with an invoice
+  commentsCount: Int!
+}
+
+################################################################
+# Query
+################################################################
+
+extend type Query {
+  # Get an invoice by ID
+  invoice(id: ID!): Invoice
+  # Get a list of invoices
+  invoices(offset: Int, limit: Int, ids: [ID!]): [Invoice!]!
+}
+
+################################################################
+# Mutation
+################################################################
+
+input CheckDetailsAddress {
+  line: String!
+  line2: String
+  city: String!
+  state: String!
+  zip: String!
+  country: String
+}
+
+input CheckDetailsInput {
+  recipientAddress: CheckDetailsAddress!
+  recipientName: String!
+  memo: String!
+}
+
+input UpdateInvoiceApprovalInput {
+  approvalStatus: ApprovalStatus!
+  notes: String
+  reason: DenyReason
+}
+
+input UpdateInvoiceApproversInput {
+  approverIds: [ID!]!
+}
+
+enum InvoicePaymentRequestStatus {
+  FAILED
+  SUCCEEDED
+}
+
+enum DuplicateStatusEnum {
+  DUPLICATE
+  REPLACEMENT
+  INVOICE
+}
+
+type PayInvoiceRequestResponse {
+  status: InvoicePaymentRequestStatus!
+  invoice: Invoice!
+}
+
+input UpdateInvoiceInput {
+  number: String
+  invoiceDate: Date
+  dueDate: Date
+  periodStartDate: Date
+  periodEndDate: Date
+  totalAmount: Float
+  amountDue: Float
+}
